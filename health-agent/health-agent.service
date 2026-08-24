@@ -1,0 +1,14 @@
+[Unit]
+Description=Local health agent
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/health-agent.py
+Environment=HEALTH_PORT=14159
+Environment=HEALTH_PROCESS=necesse
+Restart=always
+User=nobody
+
+[Install]
+WantedBy=multi-user.target
