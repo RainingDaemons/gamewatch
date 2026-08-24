@@ -10,7 +10,7 @@ Necesse LXC   ── GET :9101/health──┐
 Playit.gg LXC ── GET :9101/health──┘
 ```
 
-Each **source LXC** runs a tiny Python health agent on `:9101/health` that reports `healthy` only when the service process is alive *and* its UDP socket is bound. The status-page LXC does a plain HTTP `GET` against those agents, so it never has to deal with the fact that the real services are UDP.
+Each **source LXC** runs a tiny Python health agent on `:9101/health`. The Necesse LXC reports `healthy` only when the service process is alive *and* its UDP socket is bound; the playit LXC reports `healthy` when `playit status` reports `Phase: running` (playit is an outbound tunnel client and never binds a local port). The status-page LXC does a plain HTTP `GET` against those agents, so it never has to deal with the fact that the real services are UDP.
 
 ## Install the LXC for Status page
 
@@ -25,23 +25,36 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/RainingDaemons/necesse-s
 Run the command below in each source LXC (the Necesse LXC and the playit LXC):
 
 ```bash
-curl -fsSL -o /usr/local/bin/health-agent.py \
-  https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/health-agent/health-agent.py
+curl -fsSL -o /usr/local/bin/health-agent.py https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/health-agent/health-agent.py
 
-curl -fsSL -o /etc/systemd/system/health-agent.service \
-  https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/health-agent/health-agent.service
-
-# Per-LXC configuration — e.g. on the playit LXC:
-sed -i 's/HEALTH_PORT=14159/HEALTH_PORT=34867/; s/HEALTH_PROCESS=necesse/HEALTH_PROCESS=playit/' \
-  /etc/systemd/system/health-agent.service
+curl -fsSL -o /etc/systemd/system/health-agent.service https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/health-agent/health-agent.service
 
 chmod +x /usr/local/bin/health-agent.py
 systemctl daemon-reload
 systemctl enable --now health-agent
 ```
 
-The agent listens on `0.0.0.0:9101`. Restrict it to the status-page LXC's IP with
-`nftables`/`iptables` rather than exposing it to the whole LAN.
+On the **Necesse LXC** nothing else is needed - the default
+`port_and_process` mode checks the local UDP port + process.
+
+On the **playit LXC**, run the one-shot setup script instead (it switches the agent to `playit` mode and installs the scoped sudo rule for `playit status`):
+
+```bash
+curl -fsSL -o /usr/local/bin/playit_user_setup.sh https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/scripts/playit_user_setup.sh
+
+chmod +x /usr/local/bin/playit_user_setup.sh
+/usr/local/bin/playit_user_setup.sh
+```
+
+The agent listens on `0.0.0.0:9101`. Restrict it to the status-page LXC's IP with `nftables`/`iptables` rather than exposing it to the whole LAN.
+
+## Restart Health agent
+
+If changes were made in `health-agent.py` or `health-agent.service`, execute this commands:
+```bash
+systemctl daemon-reload
+systemctl restart health-agent
+```
 
 ## Configure the status page
 
@@ -72,6 +85,16 @@ pnpm preview     # preview the production build
 pnpm check       # typecheck with svelte-check
 ```
 
+## Scripts
+
+To clean DB rows for a recent configuration of status panel execute:
+```bash
+curl -fsSL -o /usr/local/bin/reset_db.sh https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/scripts/reset_db.sh
+
+chmod +x /usr/local/bin/reset_db.sh
+/usr/local/bin/reset_db.sh
+```
+
 ## Exposing later
 
 The status-page LXC only listens on `:3000` locally. You can create a `cloudflared` tunnel (hosted elsewhere) at `http://<status-lxc-ip>:3000` and map it to `status.website.com`.
@@ -81,5 +104,4 @@ The status-page LXC only listens on `:3000` locally. You can create a `cloudflar
 - The poll runs in-process via `node-cron` and stores ~1M rows/year for 2 services.
   Prune old rows if you want to keep the DB small: 
   `DELETE FROM checks WHERE checked_at < strftime('%s','now')*1000 - 7776000000;`
-- Checks run concurrently (`Promise.allSettled`) with a 5s per-request timeout to keep
-  minute-to-minute drift minimal.
+- Checks run concurrently (`Promise.allSettled`) with a 5s per-request timeout to keep minute-to-minute drift minimal.
