@@ -54,8 +54,7 @@ Type=simple
 Environment=NODE_ENV=production
 Environment=PORT=3000
 Environment=STATUS_DB_PATH=/opt/status-page/data/status.db
-Environment=NECESSE_HEALTH_URL=http://192.168.100.228:9101/health
-Environment=PLAYIT_HEALTH_URL=http://192.168.100.229:9101/health
+Environment=STATUS_CONFIG_PATH=/opt/status-page/config.toml
 WorkingDirectory=/opt/status-page
 ExecStart=/usr/bin/node build/index.js
 Restart=always

@@ -56,17 +56,22 @@ systemctl restart health-agent
 
 ## Configure the status page
 
-Variables used by status pages
+Environment variables read by the app:
 
 | Variable | Default |
 |---|---|
-| `NECESSE_HEALTH_URL` | `http://192.168.100.228:9101/health` |
-| `PLAYIT_HEALTH_URL` | `http://192.168.100.233:9101/health` |
-| `STATUS_DB_PATH` | `/opt/status-page/data/status.db` |
+| `NODE_ENV` | `production` |
 | `PORT` | `3000` |
+| `STATUS_DB_PATH` | `/opt/status-page/data/status.db` |
+| `STATUS_CONFIG_PATH` | `./config.toml` |
 
-The panel needs your agents URL in config.toml to correctly show when is active, and example could be like this:
+The service URLs are configured in `config.toml` (the source of truth), e.g.:
 ```toml
+[general]
+NODE_ENV="production"
+PORT=3000
+STATUS_DB_PATH="/opt/status-page/data/status.db"
+
 [services]
 NECESSE_HEALTH_URL="http://192.168.100.228:9101/health"
 PLAYIT_HEALTH_URL="http://192.168.100.233:9101/health"
