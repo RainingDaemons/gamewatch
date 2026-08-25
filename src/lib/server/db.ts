@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { parse } from 'smol-toml';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 
 const DB_PATH = process.env.STATUS_DB_PATH ?? '/opt/status-page/data/status.db';
 
@@ -29,10 +30,13 @@ db.exec(`
 		ON checks (service_id, checked_at);
 `);
 
-const NECESSE_TARGET =
-	process.env.NECESSE_HEALTH_URL ?? 'http://192.168.100.228:9101/health';
-const PLAYIT_TARGET =
-	process.env.PLAYIT_HEALTH_URL ?? 'http://192.168.100.229:9101/health';
+const CONFIG_PATH = process.env.STATUS_CONFIG_PATH ?? resolve(process.cwd(), 'config.toml');
+const config = parse(readFileSync(CONFIG_PATH, 'utf-8')) as {
+	services: { NECESSE_HEALTH_URL: string; PLAYIT_HEALTH_URL: string };
+};
+
+const NECESSE_TARGET = config.services.NECESSE_HEALTH_URL;
+const PLAYIT_TARGET = config.services.PLAYIT_HEALTH_URL;
 
 const upsert = db.prepare(`
 	INSERT INTO services (id, name, target) VALUES (?, ?, ?)

@@ -46,7 +46,12 @@ chmod +x /usr/local/bin/playit_user_setup.sh
 /usr/local/bin/playit_user_setup.sh
 ```
 
-The agent listens on `0.0.0.0:9101`. Restrict it to the status-page LXC's IP with `nftables`/`iptables` rather than exposing it to the whole LAN.
+The panel needs your agent URL in config.toml to correctly show when is active, and example could be like this:
+```toml
+[services]
+NECESSE_HEALTH_URL="http://192.168.100.228:9101/health"
+PLAYIT_HEALTH_URL="http://192.168.100.233:9101/health"
+```
 
 ## Restart Health agent
 
@@ -93,6 +98,14 @@ curl -fsSL -o /usr/local/bin/reset_db.sh https://raw.githubusercontent.com/Raini
 
 chmod +x /usr/local/bin/reset_db.sh
 /usr/local/bin/reset_db.sh
+```
+
+In case your `SERVICE_URL` from your `health-agent.service` was updated, run the following script to update DB rows with correct service URL:
+```bash
+curl -fsSL -o /usr/local/bin/update_services_url.sh https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/scripts/update_services_url.sh
+
+chmod +x /usr/local/bin/update_services_url.sh
+/usr/local/bin/update_services_url.sh
 ```
 
 ## Exposing later

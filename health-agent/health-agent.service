@@ -8,6 +8,7 @@ ExecStart=/usr/bin/python3 /usr/local/bin/health-agent.py
 Environment=HEALTH_PORT=14159
 Environment=HEALTH_PROCESS=necesse
 Environment=HEALTH_MODE=
+Environment=SERVICE_URL=
 Restart=always
 User=nobody
 
