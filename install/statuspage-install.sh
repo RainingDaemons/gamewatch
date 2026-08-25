@@ -40,6 +40,7 @@ msg_ok "Built Status Page"
 
 msg_info "Creating Data Directory"
 $STD mkdir -p /opt/status-page/data
+$STD mkdir -p /opt/status-page/backups
 $STD chown -R www-data:www-data /opt/status-page/data
 msg_ok "Created Data Directory"
 
@@ -68,8 +69,9 @@ systemctl enable -q --now status-page
 msg_ok "Created Service"
 
 msg_info "Creating DB Backup Service"
-$STD install -m 755 backup_db.py /opt/status-page/backup_db.py
-$STD install -m 644 backup.service backup.timer /etc/systemd/system/
+$STD chmod 775 /opt/status-page/deploy/backup_db.py
+$STD install -m 644 /opt/status-page/deploy/backup.service /etc/systemd/system/backup.service
+$STD install -m 644 /opt/status-page/deploy/backup.timer /etc/systemd/system/backup.timer
 $STD systemctl daemon-reload
 $STD systemctl enable --now backup.timer
 msg_ok "Created DB Backup Service"

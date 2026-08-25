@@ -7,7 +7,7 @@ Type=oneshot
 Environment=STATUS_DB_PATH=/opt/status-page/data/status.db
 Environment=STATUS_BACKUP_DIR=/opt/status-page/backups
 Environment=STATUS_RETENTION_DAYS=7
-ExecStart=/usr/bin/python3 /opt/status-page/backup_db.py
+ExecStart=/usr/bin/python3 /opt/status-page/deploy/backup_db.py
 
 [Install]
 WantedBy=multi-user.target

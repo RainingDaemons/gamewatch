@@ -78,11 +78,17 @@ PLAYIT_HEALTH_URL="http://192.168.100.233:9101/health"
 
 ## Check DB backup service
 
-A `backup.service` deamon is created with a `backup.timer` to every check check olds rows from DB and delete it and save a last-weeek DB backup, check if service is running with:
+A `backup.service` deamon is created with a `backup.timer` to every check check olds rows from DB and delete it and save a last-weeek DB backup, check if timer is set properly with:
 ```bash
 systemctl daemon-reload
-systemctl status backup.service
 systemctl status backup.timer
+systemctl list-timers backup.timer
+```
+
+If you want to test if backup service is working execute this commands:
+```bash
+systemctl start backup.service
+systemctl status backup.service
 ```
 
 ## Development
