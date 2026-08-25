@@ -76,6 +76,15 @@ NECESSE_HEALTH_URL="http://192.168.100.228:9101/health"
 PLAYIT_HEALTH_URL="http://192.168.100.233:9101/health"
 ```
 
+## Check DB backup service
+
+A `backup.service` deamon is created with a `backup.timer` to every check check olds rows from DB and delete it and save a last-weeek DB backup, check if service is running with:
+```bash
+systemctl daemon-reload
+systemctl status backup.service
+systemctl status backup.timer
+```
+
 ## Development
 
 ```bash
@@ -115,7 +124,4 @@ The status-page LXC only listens on `:3000` locally. You can create a `cloudflar
 
 ## Notes
 
-- The poll runs in-process via `node-cron` and stores ~1M rows/year for 2 services.
-  Prune old rows if you want to keep the DB small: 
-  `DELETE FROM checks WHERE checked_at < strftime('%s','now')*1000 - 7776000000;`
 - Checks run concurrently (`Promise.allSettled`) with a 5s per-request timeout to keep minute-to-minute drift minimal.

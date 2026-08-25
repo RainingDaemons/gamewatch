@@ -1,0 +1,11 @@
+[Unit]
+Description=Run status.db weekly backup and cleanup
+
+[Timer]
+OnCalendar=Mon *-*-* 00:00:00
+Persistent=true
+RandomizedDelaySec=300
+Unit=backup.service
+
+[Install]
+WantedBy=timers.target
