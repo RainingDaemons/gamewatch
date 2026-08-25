@@ -46,13 +46,6 @@ chmod +x /usr/local/bin/playit_user_setup.sh
 /usr/local/bin/playit_user_setup.sh
 ```
 
-The panel needs your agent URL in config.toml to correctly show when is active, and example could be like this:
-```toml
-[services]
-NECESSE_HEALTH_URL="http://192.168.100.228:9101/health"
-PLAYIT_HEALTH_URL="http://192.168.100.233:9101/health"
-```
-
 ## Restart Health agent
 
 If changes were made in `health-agent.py` or `health-agent.service`, execute this commands:
@@ -63,17 +56,21 @@ systemctl restart health-agent
 
 ## Configure the status page
 
-Target URLs are read from environment variables (see `deploy/status-page.service`):
+Variables used by status pages
 
 | Variable | Default |
 |---|---|
 | `NECESSE_HEALTH_URL` | `http://192.168.100.228:9101/health` |
-| `PLAYIT_HEALTH_URL` | `http://192.168.100.229:9101/health` |
+| `PLAYIT_HEALTH_URL` | `http://192.168.100.233:9101/health` |
 | `STATUS_DB_PATH` | `/opt/status-page/data/status.db` |
 | `PORT` | `3000` |
 
-Change the playit target if its LXC IP changes. The public tunnel address
-(`*.tun.ply.gg`) is display-only metadata and is intentionally *not* polled.
+The panel needs your agents URL in config.toml to correctly show when is active, and example could be like this:
+```toml
+[services]
+NECESSE_HEALTH_URL="http://192.168.100.228:9101/health"
+PLAYIT_HEALTH_URL="http://192.168.100.233:9101/health"
+```
 
 ## Development
 
