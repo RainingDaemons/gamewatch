@@ -34,8 +34,12 @@ systemctl daemon-reload
 systemctl enable --now health-agent
 ```
 
-On the **Necesse LXC** nothing else is needed - the default
-`port_and_process` mode checks the local UDP port + process.
+Inside the **Necesse LXC** create the following rule to the status panel can reach the necesse service:
+```bash
+ufw allow from ip-status-panel to any port 9101 proto tcp
+```
+
+> NOTA: Replace `ip-status-panel` with `hostname -I` ip from Status Page LXC
 
 On the **playit LXC**, run the one-shot setup script instead (it switches the agent to `playit` mode and installs the scoped sudo rule for `playit status`):
 
@@ -67,11 +71,6 @@ Environment variables read by the app:
 
 The service URLs are configured in `config.toml` (the source of truth), e.g.:
 ```toml
-[general]
-NODE_ENV="production"
-PORT=3000
-STATUS_DB_PATH="/opt/status-page/data/status.db"
-
 [services]
 NECESSE_HEALTH_URL="http://192.168.100.228:9101/health"
 PLAYIT_HEALTH_URL="http://192.168.100.233:9101/health"

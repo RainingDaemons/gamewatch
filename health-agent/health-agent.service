@@ -11,6 +11,9 @@ Environment=HEALTH_MODE=
 Environment=SERVICE_URL=
 Restart=always
 User=nobody
+AmbientCapabilities=CAP_SYS_PTRACE
+CapabilityBoundingSet=CAP_SYS_PTRACE
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
