@@ -61,7 +61,7 @@
 </script>
 
 <svelte:head>
-	<title>Necesse Server Status</title>
+	<title>Gamewatch</title>
 	<meta name="description" content="Live status for Necesse Server" />
 </svelte:head>
 
@@ -70,7 +70,7 @@
 		<div class="mx-auto max-w-3xl px-6 py-4">
 			<div class="flex items-center justify-between">
 				<div>
-					<h1 class="text-2xl font-semibold tracking-tight">Necesse Server Status</h1>
+					<h1 class="text-2xl font-semibold tracking-tight">Gamewatch</h1>
 				</div>
 				<div class="flex items-center gap-2 text-sm">
 					<span
