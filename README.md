@@ -1,50 +1,50 @@
-# Necesse Status Page
+# GameWatch - Customizable Status Panel for your Game Services
 
-A self-hosted status page for a [Necesse](https://necessegame.com/) game server and its [Playit.gg](https://playit.gg) tunnel. It polls local health agents on each source LXC every minute, stores results in SQLite and serves a public status page via SvelteKit.
+A self-hosted status page for your game servers and its [Playit.gg](https://playit.gg) tunnel. It polls local health agents on each source LXC every minute, stores results in SQLite and serves a public status page via SvelteKit.
 
 ## Architecture
 
 ```
-Necesse LXC   ── GET :9101/health──┐
+Gameserver LXC   ── GET :9101/health──┐
                                    ├──► Status Page LXC ──► SQLite ──► SvelteKit (Node adapter)
 Playit.gg LXC ── GET :9101/health──┘
 ```
 
-Each **source LXC** runs a tiny Python health agent on `:9101/health`. The Necesse LXC reports `healthy` only when the service process is alive *and* its UDP socket is bound; the playit LXC reports `healthy` when `playit status` reports `Phase: running` (playit is an outbound tunnel client and never binds a local port). The status-page LXC does a plain HTTP `GET` against those agents, so it never has to deal with the fact that the real services are UDP.
+Each **source LXC** runs a tiny Python health agent on `:9101/health`. The Gameserver LXC reports `healthy` only when the service process is alive *and* its UDP socket is bound; the playit LXC reports `healthy` when `playit status` reports `Phase: running` (playit is an outbound tunnel client and never binds a local port). The status-page LXC does a plain HTTP `GET` against those agents, so it never has to deal with the fact that the real services are UDP.
 
 ## Install the LXC for Status page
 
 Run the command below in the Proxmox VE Shell:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/statuspage.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/RainingDaemons/gamewatch/main/statuspage.sh)"
 ```
 
 ## Install a Health agent on a source LXC
 
-Run the command below in each source LXC (the Necesse LXC and the playit LXC):
+Run the command below in each source LXC (the Gameserver LXC and the playit LXC):
 
 ```bash
-curl -fsSL -o /usr/local/bin/health-agent.py https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/health-agent/health-agent.py
+curl -fsSL -o /usr/local/bin/health-agent.py https://raw.githubusercontent.com/RainingDaemons/gamewatch/main/health-agent/health-agent.py
 
-curl -fsSL -o /etc/systemd/system/health-agent.service https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/health-agent/health-agent.service
+curl -fsSL -o /etc/systemd/system/health-agent.service https://raw.githubusercontent.com/RainingDaemons/gamewatch/main/health-agent/health-agent.service
 
 chmod +x /usr/local/bin/health-agent.py
 systemctl daemon-reload
 systemctl enable --now health-agent
 ```
 
-Inside the **Necesse LXC** create the following rule to the status panel can reach the necesse service:
+Inside the **Gameserver LXC** create the following rule to the status panel can reach the service:
 ```bash
 ufw allow from ip-status-panel to any port 9101 proto tcp
 ```
 
 > NOTA: Replace `ip-status-panel` with `hostname -I` ip from Status Page LXC
 
-On the **playit LXC**, run the one-shot setup script instead (it switches the agent to `playit` mode and installs the scoped sudo rule for `playit status`):
+On the **Playit LXC**, run the one-shot setup script instead (it switches the agent to `playit` mode and installs the scoped sudo rule for `playit status`):
 
 ```bash
-curl -fsSL -o /usr/local/bin/playit_user_setup.sh https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/scripts/playit_user_setup.sh
+curl -fsSL -o /usr/local/bin/playit_user_setup.sh https://raw.githubusercontent.com/RainingDaemons/gamewatch/main/scripts/playit_user_setup.sh
 
 chmod +x /usr/local/bin/playit_user_setup.sh
 /usr/local/bin/playit_user_setup.sh
@@ -71,9 +71,11 @@ Environment variables read by the app:
 
 The service URLs are configured in `config.toml` (the source of truth), e.g.:
 ```toml
-[services]
-NECESSE_HEALTH_URL="http://192.168.100.228:9101/health"
-PLAYIT_HEALTH_URL="http://192.168.100.233:9101/health"
+services = [
+  { name = "necesse", display_name = "Necesse Service", health_url = "http://192.168.100.228:9101/health" },
+  { name = "playit", display_name = "Playit.gg Tunnel", health_url = "http://192.168.100.233:9101/health" }
+]
+
 ```
 
 ## Check DB backup service
@@ -110,15 +112,15 @@ pnpm check       # typecheck with svelte-check
 
 To clean DB rows for a recent configuration of status panel execute:
 ```bash
-curl -fsSL -o /usr/local/bin/reset_db.sh https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/scripts/reset_db.sh
+curl -fsSL -o /usr/local/bin/reset_db.sh https://raw.githubusercontent.com/RainingDaemons/gamewatch/main/scripts/reset_db.sh
 
 chmod +x /usr/local/bin/reset_db.sh
 /usr/local/bin/reset_db.sh
 ```
 
-In case your `SERVICE_URL` from your `health-agent.service` was updated, run the following script to update DB rows with correct service URL:
+In case your `config.toml` was changed, run the following script to update DB rows with correct services URL:
 ```bash
-curl -fsSL -o /usr/local/bin/update_services_url.sh https://raw.githubusercontent.com/RainingDaemons/necesse-status/main/scripts/update_services_url.sh
+curl -fsSL -o /usr/local/bin/update_services_url.sh https://raw.githubusercontent.com/RainingDaemons/gamewatch/main/scripts/update_services_url.sh
 
 chmod +x /usr/local/bin/update_services_url.sh
 /usr/local/bin/update_services_url.sh
