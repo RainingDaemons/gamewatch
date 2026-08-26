@@ -3,8 +3,8 @@ set -euo pipefail
 # sync-service-target.sh — run as root on the necesse-status (panel) host.
 #
 # What it does:
-#   1. Reads NECESSE_HEALTH_URL and PLAYIT_HEALTH_URL from config.toml.
-#   2. Updates the matching rows (id='necesse', id='playit') in status.db's
+#   1. Reads the services array from config.toml.
+#   2. Updates the matching rows (by `name` -> `id`) in status.db's
 #      `services` table with those URLs — backing up the DB first.
 #   3. Optionally restarts the status-page service so the panel re-polls
 #      with the corrected targets immediately.
@@ -42,39 +42,48 @@ if [[ ! -f "$STATUS_DB_PATH" ]]; then
   exit 1
 fi
 
-# --- 1. Read URLs from config.toml ------------------------------------------
-# Expects lines like: NECESSE_HEALTH_URL="http://192.168.100.228:9101/health"
-extract_toml_value() {
-  local key="$1"
-  grep -E "^${key}[[:space:]]*=" "$CONFIG_PATH" \
+# --- 1. Read services from config.toml ---------------------------------------
+# Expects entries like:
+#   { name = "necesse", display_name = "Necesse Service", health_url = "..." },
+extract_entry_field() {
+  local entry="$1"
+  local key="$2"
+  grep -oE "${key}[[:space:]]*=[[:space:]]*\"[^\"]*\"" <<<"$entry" \
     | head -n1 \
     | sed -E "s/^${key}[[:space:]]*=[[:space:]]*\"([^\"]*)\".*/\1/"
 }
 
-NECESSE_URL="$(extract_toml_value NECESSE_HEALTH_URL)"
-PLAYIT_URL="$(extract_toml_value PLAYIT_HEALTH_URL)"
+SERVICE_NAMES=()
+SERVICE_URLS=()
 
-if [[ -z "$NECESSE_URL" ]]; then
-  echo "error: NECESSE_HEALTH_URL not found in $CONFIG_PATH" >&2
-  exit 1
-fi
-if [[ -z "$PLAYIT_URL" ]]; then
-  echo "error: PLAYIT_HEALTH_URL not found in $CONFIG_PATH" >&2
+while IFS= read -r line; do
+  entry="$(grep -oE '\{[^}]*\}' <<<"$line" | head -n1)"
+  [[ -z "$entry" ]] && continue
+  name="$(extract_entry_field "$entry" name)"
+  url="$(extract_entry_field "$entry" health_url)"
+  [[ -z "$name" || -z "$url" ]] && continue
+  SERVICE_NAMES+=("$name")
+  SERVICE_URLS+=("$url")
+done < <(grep -E 'health_url[[:space:]]*=' "$CONFIG_PATH")
+
+if [[ ${#SERVICE_NAMES[@]} -eq 0 ]]; then
+  echo "error: no services found in $CONFIG_PATH" >&2
   exit 1
 fi
 
 echo "config.toml says:"
-echo "  necesse -> $NECESSE_URL"
-echo "  playit  -> $PLAYIT_URL"
+for i in "${!SERVICE_NAMES[@]}"; do
+  printf '  %s -> %s\n' "${SERVICE_NAMES[$i]}" "${SERVICE_URLS[$i]}"
+done
 
 # --- 2. Update status.db -----------------------------------------------------
 cp "$STATUS_DB_PATH" "${STATUS_DB_PATH}.bak.$(date +%Y%m%d%H%M%S)"
 echo "backed up status.db"
 
-sqlite3 "$STATUS_DB_PATH" <<SQL
-UPDATE services SET target = '${NECESSE_URL}' WHERE id = 'necesse';
-UPDATE services SET target = '${PLAYIT_URL}'  WHERE id = 'playit';
-SQL
+for i in "${!SERVICE_NAMES[@]}"; do
+  sqlite3 "$STATUS_DB_PATH" \
+    "UPDATE services SET target = '${SERVICE_URLS[$i]}' WHERE id = '${SERVICE_NAMES[$i]}';"
+done
 
 echo
 echo "rows after sync:"

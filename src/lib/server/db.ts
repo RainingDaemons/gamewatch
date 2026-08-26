@@ -32,18 +32,16 @@ db.exec(`
 
 const CONFIG_PATH = process.env.STATUS_CONFIG_PATH ?? resolve(process.cwd(), 'config.toml');
 const config = parse(readFileSync(CONFIG_PATH, 'utf-8')) as {
-	services: { NECESSE_HEALTH_URL: string; PLAYIT_HEALTH_URL: string };
+	services: { name: string; display_name: string; health_url: string }[];
 };
-
-const NECESSE_TARGET = config.services.NECESSE_HEALTH_URL;
-const PLAYIT_TARGET = config.services.PLAYIT_HEALTH_URL;
 
 const upsert = db.prepare(`
 	INSERT INTO services (id, name, target) VALUES (?, ?, ?)
 	ON CONFLICT(id) DO UPDATE SET name = excluded.name, target = excluded.target
 `);
 
-upsert.run('necesse', 'Necesse Service', NECESSE_TARGET);
-upsert.run('playit', 'Playit.gg Tunnel', PLAYIT_TARGET);
+for (const service of config.services) {
+	upsert.run(service.name, service.display_name, service.health_url);
+}
 
 export default db;

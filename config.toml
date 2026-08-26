@@ -1,3 +1,4 @@
-[services]
-NECESSE_HEALTH_URL="..."
-PLAYIT_HEALTH_URL="..."
+services = [
+  { name = "necesse", display_name = "Necesse Service", health_url = "..." },
+  { name = "playit", display_name = "Playit.gg Tunnel", health_url = "..." }
+]
