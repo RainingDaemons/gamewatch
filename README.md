@@ -72,11 +72,28 @@ Environment variables read by the app:
 The service URLs are configured in `config.toml` (the source of truth), e.g.:
 ```toml
 services = [
-  { name = "necesse", display_name = "Necesse Service", health_url = "http://192.168.100.228:9101/health" },
-  { name = "playit", display_name = "Playit.gg Tunnel", health_url = "http://192.168.100.233:9101/health" }
+  { name = "necesse", display_name = "Necesse Service", health_url = "http://192.168.100.228:9101/health", extra_pages = yes },
+  { name = "playit", display_name = "Playit.gg Tunnel", health_url = "http://192.168.100.233:9101/health", extra_pages = false }
 ]
 
 ```
+
+## Extra info pages
+
+Set `extra_pages = yes` on a service to turn its display name into a link. The
+link points to `/info/<name>` (e.g. `https://status.website.com/info/necesse`).
+
+The page content lives in a folder at the repo root:
+
+```
+extra_pages/
+  +layout.svelte # generic layout: back-to-home button + "<display_name> Info" title
+  necesse/
+    +page.svelte # content rendered at /info/necesse
+```
+
+Only services with `extra_pages = yes` are linked. Extra pages are rendered
+client-side (CSR), so you can fetch dynamic content inside them on mount.
 
 ## Check DB backup service
 

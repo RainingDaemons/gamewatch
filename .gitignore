@@ -9,3 +9,5 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 data/
 backups/
+extra_pages/*
+!extra_pages/+layout.svelte

@@ -1,4 +1,5 @@
 services = [
-  { name = "necesse", display_name = "Necesse Service", health_url = "..." },
-  { name = "playit", display_name = "Playit.gg Tunnel", health_url = "..." }
+  { name = "necesse", display_name = "Necesse Service", health_url = "...", extra_pages = "false" },
+  { name = "playit", display_name = "Playit.gg Tunnel", health_url = "...", extra_pages = "false" },
+  { name = "quakelive", display_name = "Quake Live Service", health_url = "...", extra_pages = "true" }
 ]

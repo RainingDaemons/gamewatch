@@ -15,6 +15,7 @@
 	interface Service {
 		id: string;
 		name: string;
+		extra_pages: boolean;
 		current: Current | null;
 		history: HistoryPoint[];
 		uptime: number | null;
@@ -95,7 +96,13 @@
 					<div class="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
 						<div class="flex items-center justify-between">
 							<div>
-								<h2 class="text-lg font-medium">{svc.name}</h2>
+								{#if svc.extra_pages}
+									<a href="/info/{svc.id}" class="text-lg font-medium text-blue-400 hover:text-blue-300 hover:underline">
+										{svc.name}
+									</a>
+								{:else}
+									<h2 class="text-lg font-medium">{svc.name}</h2>
+								{/if}
 								<p class="text-xs text-neutral-500">
 									{timeAgo(svc.current?.checked_at)}
 									{#if svc.current?.latency_ms != null} · {svc.current.latency_ms}ms{/if}

@@ -4,6 +4,7 @@ import db from '$lib/server/db';
 interface ServiceRow {
 	id: string;
 	name: string;
+	extra_pages: number;
 }
 
 interface UptimeRow {
@@ -15,7 +16,7 @@ const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function GET() {
-	const services = db.prepare('SELECT id, name FROM services').all() as ServiceRow[];
+	const services = db.prepare('SELECT id, name, extra_pages FROM services').all() as ServiceRow[];
 	const now = Date.now();
 
 	const result = services.map((svc) => {
@@ -44,7 +45,7 @@ export function GET() {
 		const uptimePercent =
 			uptime.total > 0 ? Math.round((uptime.up / uptime.total) * 100) : null;
 
-		return { ...svc, current, history: history.reverse(), uptime: uptimePercent };
+		return { ...svc, extra_pages: !!svc.extra_pages, current, history: history.reverse(), uptime: uptimePercent };
 	});
 
 	return json(result);
